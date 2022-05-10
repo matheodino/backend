@@ -1,7 +1,7 @@
 const http = require('http');
 const app = require('./app');
 
-// Renvoie un port valide, qu'il soit fourni sous la forme d'un numéro ou d'une chaîne.
+// Returns a valid port, whether supplied as a number or a string.
 const normalizePort = val => {
   const port = parseInt(val, 10);
 
@@ -13,10 +13,10 @@ const normalizePort = val => {
   }
   return false;
 };
-const port = normalizePort(process.env.PORT || '3000');
+const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
-// Recherche les différentes erreurs et les gère de manière appropriée.
+// Checks for various errors and handles them appropriately.
 const errorHandler = error => {
   if (error.syscall !== 'listen') {
     throw error;
@@ -40,7 +40,7 @@ const errorHandler = error => {
 const server = http.createServer(app);
 
 server.on('error', errorHandler);
-// Consigne le port ou le canal nommé sur lequel le serveur s'exécute dans la console.
+// Logs the port or named pipe the server is running on to the console.
 server.on('listening', () => {
   const address = server.address();
   const bind = typeof address === 'string' ? 'pipe ' + address : 'port ' + port;
