@@ -1,4 +1,5 @@
 const Thing = require('../models/Thing');
+const fs = require('fs');
 
 exports.getAllThings = (req, res, next) => {
     Thing.find()
@@ -13,9 +14,11 @@ exports.getOneThing = (req, res, next) => {
 }
 
 exports.createThing = (req, res, next) => {
-    delete req.body._id;
+    const thingObject = JSON.parse(req.body.thing); // to transform form-data into JSON due to of file request usage
+    delete thingObject._id;
     const thing = new Thing({
-        ...req.body
+        ...thingObject,
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
     });
     thing.save()
         .then(() => res.status(201).json({ message: 'Saved!' }))
@@ -29,21 +32,14 @@ exports.modifyThing = (req, res, next) => {
 }
 
 exports.deleteThing = (req, res, next) => {
-    Thing.findOne({ _id: req.params.id }).then(
-        (thing) => {
-            if (!thing) {
-                return res.status(404).json({
-                    error: new Error('Thing not found.')
-                })
-            }
-            if (thing.userId !== req.auth.userId) {
-                return res.status(400).json({
-                    error: new Error('Unauthorized request.')
-                })
-            }
-        }
-    );
-    Thing.deleteOne({ _id: req.params.id })
-        .then(() => res.status(201).json({ message: 'Deleted!' }))
-        .catch(error => res.status(400).json({ error }));
+    Thing.findOne({ _id: req.params.id })
+        .then(thing => {
+            const filename = thing.imageUrl.split('/images/')[1];
+            fs.unlink(`images/${filename}`, () => {
+                Thing.deleteOne({ _id: req.params.id })
+                    .then(() => res.status(200).json({ message: 'Deleted!' }))
+                    .catch(error => res.status(400).json({ error }));
+            });
+        })
+        .catch(error => res.status(500).json({ error }));
 }
